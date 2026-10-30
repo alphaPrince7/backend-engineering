@@ -8,19 +8,34 @@ cloudinary.config({
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
+  if (!localFilePath) return null;
+
   try {
-    if (!localFilePath) return null;
-    // upload the file on cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
+      resource_type: "image",
     });
-    //file has been uploaded successfully
-    console.log("File is uploaded on cloudinary", response.url);
+
+    console.log("Cloudinary upload successful:", {
+      public_id: response.public_id,
+      secure_url: response.secure_url,
+    });
+
     return response;
   } catch (error) {
-    fs.unlinkSync(localFilePath); //remove the locally saved temporary file as the upload operation got failed
+    console.error("Cloudinary upload error:", error.message, error.http_code);
+
     return null;
+  } finally {
+    // Always remove the temporary local file safely
+    try {
+      if (fs.existsSync(localFilePath)) {
+        fs.unlinkSync(localFilePath);
+        console.log("Temporary file deleted:", localFilePath);
+      }
+    } catch (cleanupError) {
+      console.error("Temporary file cleanup error:", cleanupError.message);
+    }
   }
 };
 
-export {uploadOnCloudinary}
+export { uploadOnCloudinary };
